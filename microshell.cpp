@@ -42,6 +42,7 @@ void sigchld_handler(int) {
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         fprintf(stdout, "\nProcess %d finished\n", pid);
+        fflush(stdout);
     }
 }
 
@@ -90,7 +91,7 @@ int main() {
         }
 
         bool background = false;
-        if (!tokens.empty() && tokens.back() == "&") {
+        if (tokens.size() > 1 && tokens.back() == "&") {
             background = true;
             tokens.pop_back();
         }
