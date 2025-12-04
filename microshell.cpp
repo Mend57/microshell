@@ -118,7 +118,7 @@ int main() {
         if (background) {
             cout << "[" << childPid << "]\n";
         } else {
-            waitpid(childPid, nullptr, 0);
+            wait(&status);;
         }
     }
 }
