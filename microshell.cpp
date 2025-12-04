@@ -15,19 +15,18 @@ time_t startTime = 0;
 
 void printTime() {
     time_t end = time(nullptr);
-    int seconds = difftime(end, startTime);
+    int totalSeconds = difftime(end, startTime);
+    int hours = totalSeconds / 3600;
+    int minutes = (totalSeconds % 3600) / 60;
+    int seconds = totalSeconds % 60;
 
-    int h = seconds / 3600;
-    int m = (seconds % 3600) / 60;
-    int s = seconds % 60;
-
-    cout << "Elapsed time: " << h << " Hours, "
-         << m << " Minutes, "
-         << s << " Seconds\n";
+    fprintf(stdout, "Elapsed time: %d Hours, %d Minutes, %d Seconds\n", hours, minutes, seconds);
 }
 
 void sigint_handler(int) {
-    cout << "\nDo you really want to exit? (yes/no) ? ";
+    fprintf(stdout, "\nDo you really want to exit? (yes/no) ? ");
+    fflush(stdout);
+
     string answer;
     getline(cin, answer);
 
@@ -42,15 +41,15 @@ void sigchld_handler(int) {
     pid_t pid;
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-        cout << "\nProcess " << pid << " finished" << endl;
+        fprintf(stdout, "\nProcess %d finished\n", pid);
     }
 }
 
 vector<string> read_command() {
     char cwd[PATH_MAX];
     getcwd(cwd, sizeof(cwd));
-
-    cout << cwd << " > ";
+    fprintf(stdout, "%s > ", cwd);
+    fflush(stdout);
 
     string line;
     getline(cin, line);
@@ -86,9 +85,7 @@ int main() {
         if (cmd == "cd") {
             const char* dir = (tokens.size() >= 2) ? tokens[1].c_str() : getenv("HOME");
             if (!dir) dir = "/";
-            if (chdir(dir) != 0) {
-                perror("cd");
-            }
+            if (chdir(dir) != 0) fprintf(stderr, "cd: %s\n", strerror(errno));
             continue;
         }
 
@@ -110,12 +107,12 @@ int main() {
         }
         if (childPid == 0) {
             execvp(args[0], args.data());
-            perror("execvp");
+            fprintf(stderr, "microshell: Command not found: %s\n", cmd.c_str());
             exit(1);
         }
 
         if (background) {
-            cout << "[" << childPid << "]\n";
+            fprintf(stdout, "[%d]\n", childPid);
         } else {
             wait(&status);
         }
