@@ -68,6 +68,8 @@ int main() {
     startTime = time(nullptr);
     signal(SIGINT, sigint_handler);
     signal(SIGCHLD, sigchld_handler);
+    int status;
+    int childPid;
 
     while (true) {
         vector<string> tokens = read_command();
@@ -102,13 +104,10 @@ int main() {
         }
         args.push_back(nullptr);
 
-        pid_t childPid = fork();
-
-        if (childPid < 0) {
-            perror("fork");
-            continue;
+        if ((childPid = fork()) == -1) {
+            fprintf(stderr,"can't fork\n");
+            exit(1);
         }
-
         if (childPid == 0) {
             execvp(args[0], args.data());
             perror("execvp");
@@ -118,7 +117,7 @@ int main() {
         if (background) {
             cout << "[" << childPid << "]\n";
         } else {
-            wait(&status);;
+            wait(&status);
         }
     }
 }
